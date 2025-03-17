@@ -3,25 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Skenování QR kódu</title>
+    <title>AirCamomile - Skenování</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        #reader { width: 100%; height: 300px; margin: auto; }
-        .team-box { padding: 20px; margin-top: 20px; font-size: 24px; font-weight: bold; }
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+        .header {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #003366;
+        }
+        .scanner {
+            width: 90%;
+            max-width: 400px;
+        }
+        .team-box {
+            width: 90%;
+            max-width: 400px;
+            padding: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 10px;
+            color: white;
+            border-radius: 10px;
+        }
+        .counter {
+            font-size: 20px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
-
-    <h2>Skenování QR kódu</h2>
-    <div id="reader"></div>
-
-    <div id="team-info" class="team-box">Naskenuj QR kód...</div>
-    <h3>Počet naskenovaných: <span id="counter">0</span></h3>
-
+    <div class="header">AirCamomile - Kontrola QR</div>
+    <div id="reader" class="scanner"></div>
+    <div id="team-info" class="team-box">Skenujte QR kód...</div>
+    <div class="counter">Počet naskenovaných: <span id="counter">0</span></div>
+    
     <script>
         let scannedCount = 0;
-        const apiUrl = "https://script.google.com/macros/s/AKfycbxMBu2saO4W2XnbhrrXxDzS9QX-MK3TFaEHTCFAm15w9OV4FOPXMwM9RM48QdqtbmAO/exec"; // Zadej URL API
+        const apiUrl = "https://script.google.com/macros/s/AKfycbxMBu2saO4W2XnbhrrXxDzS9QX-MK3TFaEHTCFAm15w9OV4FOPXMwM9RM48QdqtbmAO/exec"; // Nahraď API URL
 
         function onScanSuccess(qrCodeMessage) {
             fetch(`${apiUrl}?id=${qrCodeMessage}`)
@@ -29,12 +58,12 @@
                 .then(data => {
                     if (data.error) {
                         document.getElementById("team-info").innerText = "ID nenalezeno!";
+                        document.getElementById("team-info").style.backgroundColor = "gray";
                         return;
                     }
-
                     scannedCount++;
                     document.getElementById("counter").innerText = scannedCount;
-                    document.getElementById("team-info").innerText = `Tým: ${data.color}`;
+                    document.getElementById("team-info").innerText = `Tým: ${data.color} - ${data.name}`;
                     document.getElementById("team-info").style.backgroundColor = getColor(data.color);
 
                     fetch(apiUrl, { method: "POST", body: new URLSearchParams({ id: qrCodeMessage }) });
@@ -49,11 +78,10 @@
                 "Červená": "red",
                 "Žlutá": "yellow",
                 "Fialová": "purple"
-            }[color] || "white";
+            }[color] || "gray";
         }
 
         new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }).render(onScanSuccess);
     </script>
-
 </body>
 </html>
