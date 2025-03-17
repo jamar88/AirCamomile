@@ -3,83 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seznam Dětí</title>
+    <title>Skenování QR kódu</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-        }
-        table {
-            width: 80%;
-            margin: 20px auto;
-            border-collapse: collapse;
-        }
-        th, td {
-            border: 1px solid black;
-            padding: 10px;
-            text-align: center;
-        }
-        th {
-            background-color: #f4f4f4;
-        }
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #reader { width: 100%; height: 300px; margin: auto; }
+        .team-box { padding: 20px; margin-top: 20px; font-size: 24px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <h2>Seznam Dětí</h2>
-    <table id="data-table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Jméno Příjmení</th>
-                <th>Barva Týmu</th>
-                <th>Stav Skenování</th>
-                <th>Čas Skenování</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Data se načtou sem -->
-        </tbody>
-    </table>
+
+    <h2>Skenování QR kódu</h2>
+    <div id="reader"></div>
+
+    <div id="team-info" class="team-box">Naskenuj QR kód...</div>
+    <h3>Počet naskenovaných: <span id="counter">0</span></h3>
 
     <script>
-        async function fetchData() {
-            const apiUrl = "https://script.google.com/macros/s/AKfycbxMBu2saO4W2XnbhrrXxDzS9QX-MK3TFaEHTCFAm15w9OV4FOPXMwM9RM48QdqtbmAO/exec"; // Sem vlož URL API
-            try {
-                const response = await fetch(apiUrl);
-                const data = await response.json();
-                
-                const tableBody = document.querySelector("#data-table tbody");
-                tableBody.innerHTML = ""; // Vymazání starých dat
-                
-                data.forEach(row => {
-                    const tr = document.createElement("tr");
-                    tr.innerHTML = `
-                        <td>${row.id}</td>
-                        <td>${row.name}</td>
-                        <td style="background-color: ${getColor(row.color)}">${row.color}</td>
-                        <td>${row.scanned}</td>
-                        <td>${row.timestamp}</td>
-                    `;
-                    tableBody.appendChild(tr);
-                });
-            } catch (error) {
-                console.error("Chyba při načítání dat:", error);
-            }
+        let scannedCount = 0;
+        const apiUrl = "TVOJE_GOOGLE_APPS_SCRIPT_API_URL"; // Zadej URL API
+
+        function onScanSuccess(qrCodeMessage) {
+            fetch(`${apiUrl}?id=${qrCodeMessage}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById("team-info").innerText = "ID nenalezeno!";
+                        return;
+                    }
+
+                    scannedCount++;
+                    document.getElementById("counter").innerText = scannedCount;
+                    document.getElementById("team-info").innerText = `Tým: ${data.color}`;
+                    document.getElementById("team-info").style.backgroundColor = getColor(data.color);
+
+                    fetch(apiUrl, { method: "POST", body: new URLSearchParams({ id: qrCodeMessage }) });
+                })
+                .catch(error => console.error("Chyba:", error));
         }
 
-        function getColor(colorName) {
-            const colors = {
-                "Zelená": "#4CAF50",
-                "Modrá": "#2196F3",
-                "Červená": "#F44336",
-                "Žlutá": "#FFEB3B",
-                "Fialová": "#9C27B0"
-            };
-            return colors[colorName] || "#FFFFFF";
+        function getColor(color) {
+            return {
+                "Zelená": "green",
+                "Modrá": "blue",
+                "Červená": "red",
+                "Žlutá": "yellow",
+                "Fialová": "purple"
+            }[color] || "white";
         }
 
-        fetchData();
-        setInterval(fetchData, 5000); // Obnovuje data každých 5 sekund
+        new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }).render(onScanSuccess);
     </script>
+
 </body>
 </html>
