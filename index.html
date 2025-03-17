@@ -28,16 +28,17 @@
             font-weight: bold;
             display: flex;
             align-items: center;
-            justify-content: space-between;
             width: 100%;
+            justify-content: center;
         }
         .logo {
             height: 40px;
-            margin-left: 10px;
+            margin-right: 10px;
         }
         .header-text {
-            flex-grow: 1;
-            text-align: center;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
         }
         .container {
             display: flex;
@@ -57,7 +58,6 @@
             align-items: center;
             justify-content: center;
             background: white;
-            padding: 5px;
             overflow: hidden;
         }
         .info-container {
@@ -122,41 +122,46 @@
         };
 
         function onScanSuccess(qrCodeMessage) {
-            let [id, fullName] = qrCodeMessage.split(";");
-            fetchDataFromGoogleSheets(id, fullName);
+            console.log("QR kód naskenován:", qrCodeMessage);
+            fetchDataFromGoogleSheets(qrCodeMessage);
         }
 
-        function fetchDataFromGoogleSheets(id, fullName) {
+        function fetchDataFromGoogleSheets(id) {
             fetch("https://script.google.com/macros/s/TVOJE_SCRIPT_URL/exec?id=" + id)
                 .then(response => response.json())
                 .then(data => {
-                    if (data.color) {
-                        document.getElementById("infoBox").innerText = fullName + " - " + data.color.toUpperCase();
+                    if (data.color && data.name) {
+                        document.getElementById("infoBox").innerText = data.name + " - " + data.color.toUpperCase();
                         document.getElementById("infoBox").style.backgroundColor = teamColors[data.color] || "gray";
                         document.body.style.backgroundColor = teamColors[data.color] || "#F4F6F9";
-                        updateGoogleSheet(id); 
+                        updateGoogleSheet(id);
                     } else {
                         document.getElementById("infoBox").innerText = "Neznámý QR kód";
                         document.getElementById("infoBox").style.backgroundColor = "gray";
                         document.body.style.backgroundColor = "#F4F6F9";
                     }
-                });
+                })
+                .catch(error => console.error("Chyba při získávání dat:", error));
         }
 
         function updateGoogleSheet(id) {
-            fetch("https://script.google.com/macros/s/AKfycbxMBu2saO4W2XnbhrrXxDzS9QX-MK3TFaEHTCFAm15w9OV4FOPXMwM9RM48QdqtbmAO/exec" + id + "&update=true")
+            fetch("https://script.google.com/macros/s/AKfycbxMBu2saO4W2XnbhrrXxDzS9QX-MK3TFaEHTCFAm15w9OV4FOPXMwM9RM48QdqtbmAO/exec?id=" + id + "&update=true")
                 .then(() => {
                     scannedCount++;
                     document.getElementById("scannedCount").innerText = scannedCount;
-                });
+                })
+                .catch(error => console.error("Chyba při aktualizaci Google Sheets:", error));
         }
 
-        const html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start(
-            { facingMode: "environment" },
-            { fps: 10, qrbox: { width: 250, height: 250 } },
-            onScanSuccess
-        );
+        document.addEventListener("DOMContentLoaded", () => {
+            const html5QrCode = new Html5Qrcode("reader");
+
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 200, height: 200 } },
+                onScanSuccess
+            ).catch(error => console.error("Chyba při spuštění skeneru:", error));
+        });
     </script>
 </body>
 </html>
