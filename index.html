@@ -21,7 +21,7 @@
 
     <script>
         let scannedCount = 0;
-        const apiUrl = "TVOJE_GOOGLE_APPS_SCRIPT_API_URL"; // Zadej URL API
+        const apiUrl = "https://script.google.com/macros/s/AKfycbxMBu2saO4W2XnbhrrXxDzS9QX-MK3TFaEHTCFAm15w9OV4FOPXMwM9RM48QdqtbmAO/exec"; // Zadej URL API
 
         function onScanSuccess(qrCodeMessage) {
             fetch(`${apiUrl}?id=${qrCodeMessage}`)
