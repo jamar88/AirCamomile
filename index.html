@@ -3,77 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Check-in | Týmy</title>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://apis.google.com/js/api.js"></script>
+    <title>Seznam Dětí</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #F4F6F9; text-align: center; margin: 0; padding: 0; }
-        .header { background: #003366; color: white; padding: 15px; font-size: 20px; font-weight: bold; }
-        .container { display: flex; flex-direction: column; height: 100vh; justify-content: space-between; }
-        .scanner-container { flex: 1; display: flex; justify-content: center; align-items: center; }
-        .info-container { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        #reader { width: 100%; max-width: 400px; }
-        #infoBox { width: 90%; height: 120px; font-size: 24px; color: white; text-align: center; display: flex; justify-content: center; align-items: center; border-radius: 10px; }
-        .counter { font-size: 20px; margin-top: 20px; font-weight: bold; }
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
     </style>
 </head>
 <body>
-    <div class="header">QR Check-in | Rozdělení do týmů</div>
-
-    <div class="container">
-        <div class="scanner-container">
-            <div id="reader"></div>
-        </div>
-        <div class="info-container">
-            <div id="infoBox" style="background: gray;">Scan QR Code</div>
-            <div class="counter">Naskenováno: <span id="scannedCount">0</span></div>
-        </div>
-    </div>
+    <h2>Seznam Dětí</h2>
+    <table id="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Jméno Příjmení</th>
+                <th>Barva Týmu</th>
+                <th>Stav Skenování</th>
+                <th>Čas Skenování</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data se načtou sem -->
+        </tbody>
+    </table>
 
     <script>
-        let scannedCount = 0;
-        const teamColors = {
-            "green": "#4CAF50",
-            "yellow": "#FFEB3B",
-            "blue": "#2196F3",
-            "purple": "#9C27B0",
-            "red": "#F44336"
-        };
-
-        function onScanSuccess(qrCodeMessage) {
-            let [id, fullName] = qrCodeMessage.split(";");
-            fetchDataFromGoogleSheets(id, fullName);
-        }
-
-        function fetchDataFromGoogleSheets(id, fullName) {
-            fetch("https://script.google.com/macros/s/TVOJE_SCRIPT_URL/exec?id=" + id)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.color) {
-                        document.getElementById("infoBox").innerText = fullName + " - " + data.color.toUpperCase();
-                        document.getElementById("infoBox").style.backgroundColor = teamColors[data.color] || "gray";
-                        updateGoogleSheet(id); 
-                    } else {
-                        document.getElementById("infoBox").innerText = "Neznámý QR kód";
-                        document.getElementById("infoBox").style.backgroundColor = "gray";
-                    }
+        async function fetchData() {
+            const apiUrl = "https://script.google.com/macros/s/AKfycbxMBu2saO4W2XnbhrrXxDzS9QX-MK3TFaEHTCFAm15w9OV4FOPXMwM9RM48QdqtbmAO/exec"; // Sem vlož URL API
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                const tableBody = document.querySelector("#data-table tbody");
+                tableBody.innerHTML = ""; // Vymazání starých dat
+                
+                data.forEach(row => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td>${row.id}</td>
+                        <td>${row.name}</td>
+                        <td style="background-color: ${getColor(row.color)}">${row.color}</td>
+                        <td>${row.scanned}</td>
+                        <td>${row.timestamp}</td>
+                    `;
+                    tableBody.appendChild(tr);
                 });
+            } catch (error) {
+                console.error("Chyba při načítání dat:", error);
+            }
         }
 
-        function updateGoogleSheet(id) {
-            fetch("https://script.google.com/macros/s/TVOJE_SCRIPT_URL/exec?id=" + id + "&update=true")
-                .then(() => {
-                    scannedCount++;
-                    document.getElementById("scannedCount").innerText = scannedCount;
-                });
+        function getColor(colorName) {
+            const colors = {
+                "Zelená": "#4CAF50",
+                "Modrá": "#2196F3",
+                "Červená": "#F44336",
+                "Žlutá": "#FFEB3B",
+                "Fialová": "#9C27B0"
+            };
+            return colors[colorName] || "#FFFFFF";
         }
 
-        const html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start(
-            { facingMode: "environment" },
-            { fps: 10, qrbox: { width: 250, height: 250 } },
-            onScanSuccess
-        );
+        fetchData();
+        setInterval(fetchData, 5000); // Obnovuje data každých 5 sekund
     </script>
 </body>
 </html>
