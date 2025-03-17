@@ -27,14 +27,19 @@
             font-size: 22px;
             font-weight: bold;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             width: 100%;
         }
         .logo {
             height: 40px;
-            margin-bottom: 5px;
+            margin-right: 10px;
+            margin-left: 10px;
+        }
+        .header-text {
+            display: flex;
+            flex-direction: column;
         }
         .container {
             display: flex;
@@ -94,8 +99,10 @@
 <body>
     <div class="header">
         <img src="https://i.ibb.co/Sw9PBTPT/air-Camomile-logo.png" alt="Air Camomile Logo" class="logo">
-        <div>Air Camomile</div>
-        <div>QR Check-in</div>
+        <div class="header-text">
+            <div>Air Camomile</div>
+            <div>QR Check-in</div>
+        </div>
     </div>
     <div class="container">
         <div class="scanner-container" id="scannerBox">
