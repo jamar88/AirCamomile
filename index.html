@@ -7,15 +7,81 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; background: #F4F6F9; text-align: center; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
-        .header { background: #003366; color: white; padding: 10px; font-size: 22px; font-weight: bold; display: flex; align-items: center; justify-content: center; width: 100%; }
-        .logo { height: 40px; margin-right: 10px; }
-        .container { display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 100vh; }
-        .scanner-container { position: relative; width: 260px; height: 260px; border: 5px solid gray; border-radius: 15px; display: flex; align-items: center; justify-content: center; }
-        .info-container { margin-top: 10px; width: 90%; max-width: 400px; }
-        #reader { width: 250px; height: 250px; }
-        #infoBox { width: 100%; height: 80px; font-size: 22px; color: white; text-align: center; display: flex; justify-content: center; align-items: center; border-radius: 10px; margin-top: 10px; }
-        .counter { font-size: 20px; font-weight: bold; margin-top: 10px; }
+        body {
+            font-family: Arial, sans-serif;
+            background: url('https://www.transparenttextures.com/patterns/white-carbon.png');
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            transition: background-color 0.5s ease;
+        }
+        .header {
+            background: #003366;
+            color: white;
+            padding: 10px;
+            font-size: 22px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+        .logo {
+            height: 40px;
+            margin-right: 10px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100vh;
+        }
+        .scanner-container {
+            position: relative;
+            width: 260px;
+            height: 260px;
+            border: 5px solid gray;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            padding: 10px;
+        }
+        .info-container {
+            margin-top: 10px;
+            width: 90%;
+            max-width: 400px;
+        }
+        #reader {
+            width: 250px;
+            height: 250px;
+        }
+        #infoBox {
+            width: 100%;
+            height: 80px;
+            font-size: 22px;
+            color: white;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .counter {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -34,11 +100,11 @@
     <script>
         let scannedCount = 0;
         const teamColors = {
-            "green": "#4CAF50",
-            "yellow": "#FFEB3B",
-            "blue": "#2196F3",
-            "purple": "#9C27B0",
-            "red": "#F44336"
+            "Zelená": "#4CAF50",
+            "Žlutá": "#FFEB3B",
+            "Modrá": "#2196F3",
+            "Fialová": "#9C27B0",
+            "Červená": "#F44336"
         };
 
         function onScanSuccess(qrCodeMessage) {
@@ -53,12 +119,12 @@
                     if (data.color) {
                         document.getElementById("infoBox").innerText = fullName + " - " + data.color.toUpperCase();
                         document.getElementById("infoBox").style.backgroundColor = teamColors[data.color] || "gray";
-                        document.getElementById("scannerBox").style.borderColor = teamColors[data.color] || "gray";
+                        document.body.style.backgroundColor = teamColors[data.color] || "#F4F6F9";
                         updateGoogleSheet(id); 
                     } else {
                         document.getElementById("infoBox").innerText = "Neznámý QR kód";
                         document.getElementById("infoBox").style.backgroundColor = "gray";
-                        document.getElementById("scannerBox").style.borderColor = "gray";
+                        document.body.style.backgroundColor = "#F4F6F9";
                     }
                 });
         }
