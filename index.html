@@ -127,7 +127,7 @@
         }
 
         function fetchDataFromGoogleSheets(id) {
-    fetch(`https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec?id=${id}`)
+    fetch(`https://script.google.com/macros/s/AKfycbyyggUKkTRxN61vClbZv3fL7K_ybYjmMeAS1UJQe6yPtexBsVaoKj6gx-vtm7PX4WV6/exec?id=${id}`)
         .then(response => response.json())
         .then(data => {
             console.log("📡 Odpověď API:", data);
@@ -151,7 +151,7 @@
 }
 
 function updateGoogleSheet(id) {
-    fetch(`https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec?id=${id}&update=true`)
+    fetch(`https://script.google.com/macros/s/AKfycbyyggUKkTRxN61vClbZv3fL7K_ybYjmMeAS1UJQe6yPtexBsVaoKj6gx-vtm7PX4WV6/exec?id=${id}&update=true`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -164,7 +164,7 @@ function updateGoogleSheet(id) {
 }
 
 function fetchCount() {
-    fetch(`https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec?count=true`)
+    fetch(`https://script.google.com/macros/s/AKfycbyyggUKkTRxN61vClbZv3fL7K_ybYjmMeAS1UJQe6yPtexBsVaoKj6gx-vtm7PX4WV6/exec?count=true`)
         .then(response => response.json())
         .then(data => {
             document.getElementById("scannedCount").innerText = data.totalScanned;
