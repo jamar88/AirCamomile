@@ -1,111 +1,118 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Air Camomile | QR Check-in</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      background: #f0f0f0;
-    }
-
-    .scanner-container {
-      width: 250px;
-      height: 250px;
-      border: 5px solid gray;
-      border-radius: 15px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: white;
-    }
-
-    #reader {
-      width: 100%;
-      height: 100%;
-    }
-
-    #infoBox {
-      width: 100%;
-      height: 80px;
-      font-size: 22px;
-      color: white;
-      text-align: center;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      border-radius: 10px;
-      margin-top: 10px;
-      font-weight: bold;
-      background: gray;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Camomile | QR Check-in</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            transition: background-color 0.5s ease;
+        }
+        .scanner-container {
+            width: 250px;
+            height: 250px;
+            border: 5px solid gray;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+        }
+        #reader {
+            width: 100%;
+            height: 100%;
+        }
+        #infoBox {
+            width: 100%;
+            height: 80px;
+            font-size: 22px;
+            color: white;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px;
+            margin-top: 10px;
+            font-weight: bold;
+            background: gray;
+        }
+    </style>
 </head>
 <body>
-  <div class="scanner-container">
-    <div id="reader"></div>
-  </div>
-  <div id="infoBox">Scan QR Code</div>
+    <div class="scanner-container">
+        <div id="reader"></div>
+    </div>
+    <div id="infoBox">Scan QR Code</div>
 
-  <script>
-    function onScanSuccess(qrCodeMessage) {
-      console.log("✅ QR kód naskenován:", qrCodeMessage);
+    <script>
+        function onScanSuccess(qrCodeMessage) {
+            console.log("✅ QR kód naskenován:", qrCodeMessage);
 
-      if (!qrCodeMessage || qrCodeMessage.trim() === "") {
-        console.error("❌ Prázdný QR kód");
-        return;
-      }
+            if (!qrCodeMessage || qrCodeMessage.trim() === "") {
+                console.error("❌ Chyba: QR kód je prázdný!");
+                return;
+            }
 
-      const cleanId = qrCodeMessage.trim();
-      fetchDataFromGoogleSheets(cleanId);
-    }
-
-    function fetchDataFromGoogleSheets(id) {
-      const callbackName = "handleResponse_" + Math.floor(Math.random() * 10000);
-
-      window[callbackName] = function(data) {
-        console.log("📡 Odpověď z API:", data);
-
-        if (data.error) {
-          document.getElementById("infoBox").innerText = "❌ " + data.error;
-        } else {
-          document.getElementById("infoBox").innerText = `${data.name} - ${data.color.toUpperCase()}`;
+            const cleanId = qrCodeMessage.trim();
+            fetchDataFromGoogleSheets(cleanId);
         }
 
-        // Cleanup
-        delete window[callbackName];
-        document.head.removeChild(script);
-      };
+        function fetchDataFromGoogleSheets(id) {
+            if (!id) {
+                console.error("❌ Chyba: ID není platné!");
+                return;
+            }
 
-      const script = document.createElement("script");
-      script.src = `https://script.google.com/macros/s/TVŮJ_DEPLOY_ID/exec?id=${encodeURIComponent(id)}&callback=${callbackName}`;
-      script.onerror = () => {
-        document.getElementById("infoBox").innerText = "❌ Chyba při načítání dat";
-        delete window[callbackName];
-      };
+            const callbackName = "jsonp_callback_" + Math.floor(Math.random() * 100000);
+            const script = document.createElement("script");
 
-      document.head.appendChild(script);
-    }
+            // Nastav JSONP callback
+            window[callbackName] = function(data) {
+                console.log("📡 Odpověď z API:", data);
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const html5QrCode = new Html5Qrcode("reader");
+                if (!data || data.error) {
+                    document.getElementById("infoBox").innerText = "Neznámý QR kód";
+                } else {
+                    document.getElementById("infoBox").innerText = data.name + " - " + data.color.toUpperCase();
+                }
 
-      html5QrCode.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 200, height: 200 } },
-        onScanSuccess
-      ).catch(error => console.error("❌ Chyba při spuštění skeneru:", error));
-    });
-  </script>
+                // Úklid
+                delete window[callbackName];
+                document.head.removeChild(script);
+            };
+
+            const apiUrl = `https://script.google.com/macros/s/TVŮJ_DEPLOY_ID/exec?id=${encodeURIComponent(id)}&callback=${callbackName}`;
+            script.src = apiUrl;
+
+            script.onerror = function() {
+                console.error("❌ Chyba při načítání API.");
+                document.getElementById("infoBox").innerText = "Chyba při spojení s databází.";
+                delete window[callbackName];
+                document.head.removeChild(script);
+            };
+
+            document.head.appendChild(script);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const html5QrCode = new Html5Qrcode("reader");
+
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 200, height: 200 } },
+                onScanSuccess
+            ).catch(error => console.error("❌ Chyba při spuštění skeneru:", error));
+        });
+    </script>
 </body>
 </html>
