@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Air Camomile | QR Check-in</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://apis.google.com/js/api.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
+            background: url('https://www.transparenttextures.com/patterns/white-carbon.png');
             text-align: center;
             margin: 0;
             padding: 0;
@@ -18,7 +20,36 @@
             height: 100vh;
             transition: background-color 0.5s ease;
         }
+        .header {
+            background: #003366;
+            color: white;
+            padding: 10px;
+            font-size: 22px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            justify-content: center;
+        }
+        .logo {
+            height: 40px;
+            margin-right: 10px;
+        }
+        .header-text {
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100vh;
+        }
         .scanner-container {
+            position: relative;
             width: 250px;
             height: 250px;
             border: 5px solid gray;
@@ -27,6 +58,17 @@
             align-items: center;
             justify-content: center;
             background: white;
+            overflow: hidden;
+        }
+        .info-container {
+            margin-top: 10px;
+            width: 90%;
+            max-width: 400px;
+        }
+        #reader video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover;
         }
         #reader {
             width: 100%;
@@ -44,75 +86,117 @@
             border-radius: 10px;
             margin-top: 10px;
             font-weight: bold;
-            background: gray;
+        }
+        .counter {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="scanner-container">
-        <div id="reader"></div>
+    <div class="header">
+        <img src="https://i.ibb.co/Sw9PBTPT/air-Camomile-logo.png" alt="Air Camomile Logo" class="logo">
+        <div class="header-text">
+            <div>Air Camomile</div>
+            <div>QR Check-in</div>
+        </div>
     </div>
-    <div id="infoBox">Scan QR Code</div>
+    <div class="container">
+        <div class="scanner-container" id="scannerBox">
+            <div id="reader"></div>
+        </div>
+        <div class="info-container">
+            <div id="infoBox" style="background: gray;">Scan QR Code</div>
+            <div class="counter">Naskenováno: <span id="scannedCount">0</span></div>
+        </div>
+    </div>
+   <script>
+    let scannedCount = 0;
+    const deploymentUrl = "https://script.google.com/macros/s/AKfycbyyggUKkTRxN61vClbZv3fL7K_ybYjmMeAS1UJQe6yPtexBsVaoKj6gx-vtm7PX4WV6/exec";
+    const teamColors = {
+        "Zelená": "#4CAF50",
+        "Žlutá": "#FFEB3B",
+        "Modrá": "#2196F3",
+        "Fialová": "#9C27B0",
+        "Červená": "#F44336"
+    };
 
-    <script>
-        function onScanSuccess(qrCodeMessage) {
-            console.log("✅ QR kód naskenován:", qrCodeMessage);
+    function jsonpRequest(url, callback) {
+        const callbackName = "jsonp_cb_" + Math.floor(Math.random() * 100000);
+        window[callbackName] = function(data) {
+            callback(data);
+            delete window[callbackName];
+            script.remove();
+        };
+        const script = document.createElement("script");
+        script.src = `${url}${url.includes("?") ? "&" : "?"}callback=${callbackName}`;
+        script.onerror = () => {
+            console.error("❌ JSONP chyba při volání:", url);
+            delete window[callbackName];
+            script.remove();
+        };
+        document.head.appendChild(script);
+    }
 
-            if (!qrCodeMessage || qrCodeMessage.trim() === "") {
-                console.error("❌ Chyba: QR kód je prázdný!");
-                return;
-            }
+    function onScanSuccess(qrCodeMessage) {
+        console.log("✅ QR kód naskenován:", qrCodeMessage);
+        const id = encodeURIComponent(qrCodeMessage);
+        jsonpRequest(`${deploymentUrl}?id=${id}`, function(data) {
+            console.log("📡 Odpověď API:", data);
 
-            const cleanId = qrCodeMessage.trim();
-            fetchDataFromGoogleSheets(cleanId);
-        }
+            if (data && data.name && data.color) {
+                document.getElementById("infoBox").innerText = `${data.name} - ${data.color.toUpperCase()}`;
+                document.getElementById("infoBox").style.backgroundColor = teamColors[data.color] || "gray";
+                document.body.style.backgroundColor = teamColors[data.color] || "#F4F6F9";
 
-        function fetchDataFromGoogleSheets(id) {
-            if (!id) {
-                console.error("❌ Chyba: ID není platné!");
-                return;
-            }
-
-            const callbackName = "jsonp_callback_" + Math.floor(Math.random() * 100000);
-            const script = document.createElement("script");
-
-            // Nastav JSONP callback
-            window[callbackName] = function(data) {
-                console.log("📡 Odpověď z API:", data);
-
-                if (!data || data.error) {
-                    document.getElementById("infoBox").innerText = "Neznámý QR kód";
-                } else {
-                    document.getElementById("infoBox").innerText = data.name + " - " + data.color.toUpperCase();
+                if (!data.scanned) {
+                    updateGoogleSheet(qrCodeMessage);
                 }
-
-                // Úklid
-                delete window[callbackName];
-                document.head.removeChild(script);
-            };
-
-            const apiUrl = `https://script.google.com/macros/s/TVŮJ_DEPLOY_ID/exec?id=${encodeURIComponent(id)}&callback=${callbackName}`;
-            script.src = apiUrl;
-
-            script.onerror = function() {
-                console.error("❌ Chyba při načítání API.");
-                document.getElementById("infoBox").innerText = "Chyba při spojení s databází.";
-                delete window[callbackName];
-                document.head.removeChild(script);
-            };
-
-            document.head.appendChild(script);
-        }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            const html5QrCode = new Html5Qrcode("reader");
-
-            html5QrCode.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 200, height: 200 } },
-                onScanSuccess
-            ).catch(error => console.error("❌ Chyba při spuštění skeneru:", error));
+            } else {
+                document.getElementById("infoBox").innerText = "Neznámý QR kód";
+                document.getElementById("infoBox").style.backgroundColor = "gray";
+                document.body.style.backgroundColor = "#F4F6F9";
+                console.error("⚠️ Chyba: Data nejsou správně načtena.");
+            }
         });
-    </script>
+    }
+
+    function updateGoogleSheet(id) {
+        const encodedId = encodeURIComponent(id);
+        jsonpRequest(`${deploymentUrl}?id=${encodedId}&update=true`, function(data) {
+            if (data.success) {
+                fetchScannedCount();
+                console.log("✅ Úspěšně zapsáno do Google Sheets:", data);
+            } else {
+                console.error("⚠️ Chyba při zapisování do Google Sheets:", data);
+            }
+        });
+    }
+
+    function fetchScannedCount() {
+        jsonpRequest(`${deploymentUrl}?count=true`, function(data) {
+            if (data.totalScanned !== undefined) {
+                document.getElementById("scannedCount").innerText = data.totalScanned;
+            } else {
+                console.error("⚠️ Chyba: Nenačten počet skenů");
+            }
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        fetchScannedCount();
+
+        const html5QrCode = new Html5Qrcode("reader");
+        html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 200, height: 200 } },
+            onScanSuccess
+        ).catch(error => console.error("❌ Chyba při spuštění skeneru:", error));
+
+        // Pravidelné aktualizování počtu každých 10 sekund
+        setInterval(fetchScannedCount, 10000);
+    });
+</script>
 </body>
 </html>
