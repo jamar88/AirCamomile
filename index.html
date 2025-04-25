@@ -1,153 +1,175 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Air Camomile | QR Check-in</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://apis.google.com/js/api.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #003366;
-            color: white;
+            background: url('https://www.transparenttextures.com/patterns/white-carbon.png');
+            text-align: center;
             margin: 0;
             padding: 0;
-            height: 100vh;
-            overflow: hidden;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
+            justify-content: center;
+            height: 100vh;
+            transition: background-color 0.5s ease;
         }
         .header {
+            background: #003366;
+            color: white;
+            padding: 10px;
+            font-size: 22px;
+            font-weight: bold;
             display: flex;
             align-items: center;
-            padding: 10px;
-            background-color: #002244;
             width: 100%;
+            justify-content: center;
         }
         .logo {
             height: 40px;
             margin-right: 10px;
         }
         .header-text {
+            text-align: left;
             display: flex;
             flex-direction: column;
         }
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100vh;
+        }
         .scanner-container {
-            margin-top: 10px;
+            position: relative;
             width: 250px;
             height: 250px;
-            border: 5px solid white;
+            border: 5px solid gray;
             border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
             overflow: hidden;
+        }
+        .info-container {
+            margin-top: 10px;
+            width: 90%;
+            max-width: 400px;
+        }
+        #reader video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover;
         }
         #reader {
             width: 100%;
             height: 100%;
         }
         #infoBox {
-            margin-top: 20px;
-            background: gray;
-            width: 90%;
-            max-width: 400px;
+            width: 100%;
             height: 80px;
+            font-size: 22px;
+            color: white;
+            text-align: center;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 22px;
-            font-weight: bold;
             border-radius: 10px;
+            margin-top: 10px;
+            font-weight: bold;
         }
         .counter {
-            margin-top: 10px;
             font-size: 20px;
             font-weight: bold;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <img class="logo" src="https://i.ibb.co/Sw9PBTPT/air-Camomile-logo.png" alt="Air Camomile" />
+        <img src="https://i.ibb.co/Sw9PBTPT/air-Camomile-logo.png" alt="Air Camomile Logo" class="logo">
         <div class="header-text">
             <div>Air Camomile</div>
             <div>QR Check-in</div>
         </div>
     </div>
-
-    <div class="scanner-container">
-        <div id="reader"></div>
+    <div class="container">
+        <div class="scanner-container" id="scannerBox">
+            <div id="reader"></div>
+        </div>
+        <div class="info-container">
+            <div id="infoBox" style="background: gray;">Scan QR Code</div>
+            <div class="counter">Naskenováno: <span id="scannedCount">0</span></div>
+        </div>
     </div>
-
-    <div id="infoBox">Scan QR kód</div>
-    <div class="counter">Naskenováno: <span id="scannedCount">0</span></div>
-
     <script>
         let scannedCount = 0;
-
+        const deploymentUrl = "https://script.google.com/macros/s/AKfycbyyggUKkTRxN61vClbZv3fL7K_ybYjmMeAS1UJQe6yPtexBsVaoKj6gx-vtm7PX4WV6/exec";
         const teamColors = {
             "Zelená": "#4CAF50",
-            "Modrá": "#2196F3",
-            "Červená": "#F44336",
             "Žlutá": "#FFEB3B",
-            "Fialová": "#9C27B0"
+            "Modrá": "#2196F3",
+            "Fialová": "#9C27B0",
+            "Červená": "#F44336"
         };
 
-        const deploymentUrl = "https://script.google.com/macros/s/AKfycbyyggUKkTRxN61vClbZv3fL7K_ybYjmMeAS1UJQe6yPtexBsVaoKj6gx-vtm7PX4WV6/exec";
-
         function onScanSuccess(qrCodeMessage) {
-            console.log("✅ QR naskenován:", qrCodeMessage);
-            fetchDataFromGoogleSheets(qrCodeMessage);
-        }
-
-        function fetchDataFromGoogleSheets(id) {
-            fetch(`${deploymentUrl}?id=${id}`)
-                .then((res) => res.json())
-                .then((data) => {
-                    console.log("📡 Data z API:", data);
+            console.log("✅ QR kód naskenován:", qrCodeMessage);
+            fetch(`${deploymentUrl}?id=${encodeURIComponent(qrCodeMessage)}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("📡 Odpověď API:", data);
 
                     if (data && data.name && data.color) {
-                        document.getElementById("infoBox").innerText = `${data.name} – ${data.color}`;
+                        document.getElementById("infoBox").innerText = `${data.name} - ${data.color.toUpperCase()}`;
                         document.getElementById("infoBox").style.backgroundColor = teamColors[data.color] || "gray";
-                        document.body.style.backgroundColor = teamColors[data.color] || "#003366";
+                        document.body.style.backgroundColor = teamColors[data.color] || "#F4F6F9";
 
                         if (!data.scanned) {
-                            updateGoogleSheet(id);
-                        } else {
-                            console.log("⚠️ Již dříve naskenováno.");
+                            updateGoogleSheet(qrCodeMessage);
                         }
                     } else {
                         document.getElementById("infoBox").innerText = "Neznámý QR kód";
                         document.getElementById("infoBox").style.backgroundColor = "gray";
-                        document.body.style.backgroundColor = "#003366";
+                        document.body.style.backgroundColor = "#F4F6F9";
+                        console.error("⚠️ Chyba: Data nejsou správně načtena.");
                     }
                 })
-                .catch((error) => {
-                    console.error("❌ Chyba při získávání dat:", error);
-                });
+                .catch(error => console.error("❌ Chyba při získávání dat:", error));
         }
 
         function updateGoogleSheet(id) {
-            fetch(`${deploymentUrl}?id=${id}&update=true`)
-                .then((res) => res.json())
-                .then((data) => {
+            fetch(`${deploymentUrl}?id=${encodeURIComponent(id)}&update=true`)
+                .then(response => response.json())
+                .then(data => {
                     if (data.success) {
                         fetchScannedCount();
+                        console.log("✅ Úspěšně zapsáno do Google Sheets:", data);
+                    } else {
+                        console.error("⚠️ Chyba při zapisování do Google Sheets:", data);
                     }
                 })
-                .catch((error) => {
-                    console.error("❌ Chyba při aktualizaci skenování:", error);
-                });
+                .catch(error => console.error("❌ Chyba při aktualizaci Google Sheets:", error));
         }
 
         function fetchScannedCount() {
             fetch(`${deploymentUrl}?count=true`)
-                .then((res) => res.json())
-                .then((data) => {
+                .then(response => response.json())
+                .then(data => {
                     if (data.totalScanned !== undefined) {
                         document.getElementById("scannedCount").innerText = data.totalScanned;
                     }
-                });
+                })
+                .catch(error => console.error("❌ Chyba při načítání počtu:", error));
         }
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -156,17 +178,12 @@
             const html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start(
                 { facingMode: "environment" },
-                {
-                    fps: 10,
-                    qrbox: { width: 200, height: 200 },
-                },
+                { fps: 10, qrbox: { width: 200, height: 200 } },
                 onScanSuccess
-            ).catch((err) => {
-                console.error("❌ Chyba při spuštění čtečky:", err);
-            });
+            ).catch(error => console.error("❌ Chyba při spuštění skeneru:", error));
 
-            // Pravidelný update počtu naskenovaných každých 15s
-            setInterval(fetchScannedCount, 15000);
+            // Pravidelné aktualizování počtu každých 10 sekund
+            setInterval(fetchScannedCount, 10000);
         });
     </script>
 </body>
